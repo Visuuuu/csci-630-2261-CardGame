@@ -1,30 +1,44 @@
-from uno_game.game import UNOGame
+from agents.greedy_agent import GreedyAgent
+from agents.random_agent import RandomAgent
+from interface.game_controller import GameController
+
 
 def main():
-    print("=" * 50)
     print("CSCI 630 - Comparative AI Agents")
     print("UNO Strategic Card Game")
-    print("=" * 50)
     player_names = [
-        "Random Agent",
-        "Greedy Agent",
-        "Heuristic Agent",
-        "Monte Carlo Agent",
+        "Random Agent 1",
+        "Greedy Agent 1",
+        "Random Agent 2",
+        "Greedy Agent 2",
     ]
-    game = UNOGame(player_names, seed=42)
-    print("\nGame initialized successfully!")
-    for player in game.players:
-        print(f"\n{player.name}:")
-        for card in player.hand:
-            print(f"  - {card}")
-    print("\nStarting Game State")
-    print("-" * 30)
-    print(f"Top card: {game.top_card}")
-    print(f"Active color: {game.active_color.value}")
-    print(f"Current player: {game.current_player.name}")
-    print(f"Direction: {game.direction}")
-    print(f"Cards left in deck: {game.deck.remaining_cards()}")
-    print("\nReady to begin gameplay!")
+    agents = [
+        RandomAgent(seed=101),
+        GreedyAgent(),
+        RandomAgent(seed=202),
+        GreedyAgent(),
+    ]
+    controller = GameController(
+        agents=agents,
+        player_names=player_names,
+        seed=42,
+    )
+    results = controller.run_game(
+        max_turns=1000,
+        verbose=True,
+    )
+    print("\nAI Decision Time Summary")
+    print("-" * 40)
+    for name, times in results["decision_times_ms"].items():
+        if times:
+            average_time = sum(times) / len(times)
+            print(
+                f"{name}: "
+                f"{average_time:.4f} ms "
+                f"({len(times)} decisions)"
+            )
+    print("\nSimulation finished.")
+
 
 if __name__ == "__main__":
     main()
