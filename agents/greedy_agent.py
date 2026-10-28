@@ -24,7 +24,10 @@ class GreedyAgent(BaseAgent):
             key=lambda card: card.points(),
         )
         # Wild cards need an active color selection.
-        if selected_card.card_type == CardType.WILD:
+        if selected_card.card_type in (
+                CardType.WILD,
+                CardType.WILD_DRAW_FOUR,
+        ):
             chosen_color = self._choose_wild_color(
                 observation.hand,
                 selected_card,

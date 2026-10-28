@@ -15,6 +15,7 @@ class UNOGame:
         self,
         player_names: list[str],
         seed: int | None = None,
+        include_draw_four: bool = False,
     ):
         if len(player_names) != self.NUM_PLAYERS:
             raise ValueError(
@@ -28,7 +29,11 @@ class UNOGame:
             Player(player_id=i, name=name)
             for i, name in enumerate(player_names)
         ]
-        self.deck = Deck(seed=seed)
+        self.include_draw_four = include_draw_four
+        self.deck = Deck(
+            seed=seed,
+            include_draw_four=include_draw_four,
+        )
         self.discard_pile: list[Card] = []
         self.current_player_index = 0
         self.direction = 1
@@ -121,6 +126,13 @@ class UNOGame:
                 if not self._draw_one(next_player):
                     break
             return 2
+        if card.card_type == CardType.WILD_DRAW_FOUR:
+            next_index = self.get_next_player_index()
+            next_player = self.players[next_index]
+            for _ in range(4):
+                if not self._draw_one(next_player):
+                    break
+            return 2
         return 1
 
     def play_turn(
@@ -153,7 +165,10 @@ class UNOGame:
             raise ValueError(
                 f"Illegal move: {player.name} cannot play {card}."
             )
-        if card.card_type == CardType.WILD:
+        if card.card_type in (
+                CardType.WILD,
+                CardType.WILD_DRAW_FOUR,
+        ):
             if chosen_color is None:
                 raise ValueError(
                     "A Wild card requires a chosen color."
@@ -169,13 +184,19 @@ class UNOGame:
         # Play the card.
         player.play_card(card)
         self.discard_pile.append(card)
-        if card.card_type == CardType.WILD:
+        if card.card_type in (
+                CardType.WILD,
+                CardType.WILD_DRAW_FOUR,
+        ):
             self.active_color = chosen_color
         else:
             self.active_color = card.color
         self.turn_count += 1
         message = f"{player.name} plays {card}."
-        if card.card_type == CardType.WILD:
+        if card.card_type in (
+                CardType.WILD,
+                CardType.WILD_DRAW_FOUR,
+        ):
             message += f" Chooses {chosen_color.value}."
         # A player wins immediately after playing
         # their final card.

@@ -11,35 +11,32 @@ def is_playable(
     card: Card,
     top_card: Card,
     active_color: Color,
+    hand: tuple[Card, ...] | list[Card] | None = None,
 ) -> bool:
-    """Check whether a card can legally be played.
-
-    Args:
-        card: The card the player wants to play.
-        top_card: The current top card of the discard pile.
-        active_color: The color currently in effect.
-
-    Returns:
-        True if the card can be played, otherwise False.
-    """
+    """Determine whether a card is legally playable."""
     if active_color not in REGULAR_COLORS:
-        raise ValueError(
-            "Active color must be Red, Yellow, Green, or Blue."
-        )
-    # Regular Wild cards are always playable.
+        raise ValueError("Invalid active color.")
     if card.card_type == CardType.WILD:
         return True
-    # Match the active color.
+    if card.card_type == CardType.WILD_DRAW_FOUR:
+        # A Wild Draw Four requires knowledge of the
+        # player's own hand to validate legality.
+        if hand is None:
+            return False
+        if card not in hand:
+            return False
+        return not any(
+            held_card.color == active_color
+            for held_card in hand
+        )
     if card.color == active_color:
         return True
-    # Match the number on the top card.
     if (
         card.card_type == CardType.NUMBER
         and top_card.card_type == CardType.NUMBER
         and card.number == top_card.number
     ):
         return True
-    # Match the type of action card.
     if (
         card.card_type == top_card.card_type
         and card.card_type in (
@@ -51,18 +48,23 @@ def is_playable(
         return True
     return False
 
+
 def get_playable_cards(
     hand: tuple[Card, ...] | list[Card],
     top_card: Card,
     active_color: Color,
 ) -> list[Card]:
-    """Return all playable cards in a player's hand."""
+    """Return cards that the player may legally play."""
     return [
         card
         for card in hand
-        if is_playable(card, top_card, active_color)
+        if is_playable(
+            card,
+            top_card,
+            active_color,
+            hand=hand,
+        )
     ]
 
 def is_valid_color_choice(color: Color) -> bool:
-    """Check whether a color can be selected after a Wild."""
     return color in REGULAR_COLORS

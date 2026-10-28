@@ -34,7 +34,10 @@ class Card:
                 raise ValueError(
                     "Number cards must have a value from 0 to 9."
                 )
-        elif self.card_type == CardType.WILD:
+        elif self.card_type in (
+            CardType.WILD,
+            CardType.WILD_DRAW_FOUR,
+        ):
             if self.color != Color.WILD:
                 raise ValueError(
                     "Wild cards must have the Wild color."
@@ -59,12 +62,17 @@ class Card:
             return f"{self.color.value} {self.number}"
         if self.card_type == CardType.WILD:
             return "Wild"
+        if self.card_type == CardType.WILD_DRAW_FOUR:
+            return "Wild Draw Four"
         return f"{self.color.value} {self.card_type.value}"
 
     def points(self) -> int:
         """Return the penalty points of the card."""
         if self.card_type == CardType.NUMBER:
             return self.number
-        if self.card_type == CardType.WILD:
+        if self.card_type in (
+                CardType.WILD,
+                CardType.WILD_DRAW_FOUR,
+        ):
             return 50
         return 20

@@ -25,6 +25,7 @@ class GameController:
         agents: list[BaseAgent],
         player_names: list[str],
         seed: int | None = None,
+        include_draw_four: bool = False,
     ):
         if len(agents) != UNOGame.NUM_PLAYERS:
             raise ValueError(
@@ -41,6 +42,7 @@ class GameController:
         self.game = UNOGame(
             player_names=player_names,
             seed=seed,
+            include_draw_four=include_draw_four,
         )
         self.turn_history: list[TurnRecord] = []
 

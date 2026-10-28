@@ -4,8 +4,13 @@ from uno_game.card import Card, Color, CardType
 
 class Deck:
     """Manage a deck of UNO cards."""
-    def __init__(self, seed: int | None = None):
+    def __init__(
+        self,
+        seed: int | None = None,
+        include_draw_four: bool = False,
+    ):
         self._rng = random.Random(seed)
+        self.include_draw_four = include_draw_four
         self.cards: list[Card] = []
         self._create_deck()
         self.shuffle()
@@ -45,6 +50,15 @@ class Deck:
             self.cards.append(
                 Card(Color.WILD, CardType.WILD)
             )
+        # Optional Wild Draw Four cards.
+        if self.include_draw_four:
+            for _ in range(4):
+                self.cards.append(
+                    Card(
+                        Color.WILD,
+                        CardType.WILD_DRAW_FOUR,
+                    )
+                )
 
     def shuffle(self):
         """Shuffle the cards in place."""

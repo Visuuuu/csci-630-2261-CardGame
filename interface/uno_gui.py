@@ -26,6 +26,7 @@ class UNOGUI:
         self.root.minsize(850, 650)
         self.game_number = 0
         self.agent_choices = list(DEFAULT_LINEUP)
+        self.include_draw_four = False
         self.controller = create_demo_controller(
             agent_types=self.agent_choices,
             game_seed=42,
@@ -633,7 +634,7 @@ class UNOGUI:
         self.pause_auto_play()
         dialog = tk.Toplevel(self.root)
         dialog.title("Configure New UNO Game")
-        dialog.geometry("440x350")
+        dialog.geometry("440x390")
         dialog.resizable(False, False)
         dialog.configure(bg=self.BACKGROUND)
         dialog.transient(self.root)
@@ -672,6 +673,15 @@ class UNOGUI:
                 width=19,
             ).pack(side="right")
             selections.append(selected)
+        # Wild Draw Four game option
+        draw_four_var = tk.BooleanVar(
+            value=self.include_draw_four
+        )
+        ttk.Checkbutton(
+            dialog,
+            text="Enable Wild Draw Four (108-card deck)",
+            variable=draw_four_var,
+        ).pack(pady=8)
         buttons = tk.Frame(
             dialog,
             bg=self.BACKGROUND,
@@ -683,6 +693,7 @@ class UNOGUI:
             command=lambda: self._start_configured_game(
                 [item.get() for item in selections],
                 dialog,
+                draw_four_var.get(),
             ),
         ).pack(side="left", padx=8)
         ttk.Button(
@@ -695,8 +706,9 @@ class UNOGUI:
         self,
         agent_types: list[str],
         dialog: tk.Toplevel,
+        include_draw_four: bool,
     ):
-        """Create a new match from the selected agents."""
+        """Create a new match with selected AI agents and rules."""
         next_seed = 42 + self.game_number + 1
         try:
             new_controller = create_demo_controller(
@@ -704,6 +716,7 @@ class UNOGUI:
                 game_seed=next_seed,
                 mc_simulations=25,
                 mc_depth=3,
+                include_draw_four=include_draw_four,
             )
         except (ValueError, TypeError) as error:
             messagebox.showerror(
@@ -712,19 +725,31 @@ class UNOGUI:
                 parent=dialog,
             )
             return
+        # Stop automatic playback before changing games.
         self.pause_auto_play()
+        # Close the previous asynchronous turn runner.
         self.turn_runner.close()
+        # Install the new game and runner.
         self.controller = new_controller
         self.turn_runner = AsyncTurnRunner(self.controller)
+        # Save the settings for the next dialog.
         self.agent_choices = list(agent_types)
+        self.include_draw_four = include_draw_four
         self.game_number += 1
+        # Clear previous game history.
         self.history_text.configure(state="normal")
         self.history_text.delete("1.0", "end")
         self.history_text.configure(state="disabled")
+        # Reset the latest-action message.
         self.last_action_label.configure(
-            text="New game started. Choose Next Turn or Auto Play."
+            text=(
+                "New game started. "
+                "Choose Next Turn or Auto Play."
+            )
         )
+        # Close the configuration dialog.
         dialog.destroy()
+        # Update all game information on screen.
         self._refresh_display()
 
     def _close_window(self):

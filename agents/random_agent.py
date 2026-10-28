@@ -24,7 +24,10 @@ class RandomAgent(BaseAgent):
         # Uniformly select a legal card.
         selected_card = self._rng.choice(legal_cards)
         # A Wild card requires a color selection.
-        if selected_card.card_type == CardType.WILD:
+        if selected_card.card_type in (
+                CardType.WILD,
+                CardType.WILD_DRAW_FOUR,
+        ):
             chosen_color = self._rng.choice(REGULAR_COLORS)
             return AgentDecision(
                 card=selected_card,

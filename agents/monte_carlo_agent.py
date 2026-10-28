@@ -9,7 +9,9 @@ from uno_game.card import Card, CardType, Color
 from uno_game.rules import REGULAR_COLORS, get_playable_cards
 
 
-def create_reference_cards() -> list[Card]:
+def create_reference_cards(
+    include_draw_four: bool = False,
+) -> list[Card]:
     """Build a standard 104-card pool for simulations.
     This is a fresh reference pool, NOT the live draw pile.
     """
@@ -30,6 +32,14 @@ def create_reference_cards() -> list[Card]:
                 cards.append(Card(color, card_type))
     for _ in range(4):
         cards.append(Card(Color.WILD, CardType.WILD))
+    if include_draw_four:
+        for _ in range(4):
+            cards.append(
+                Card(
+                    Color.WILD,
+                    CardType.WILD_DRAW_FOUR,
+                )
+            )
     return cards
 
 
@@ -43,6 +53,7 @@ class MonteCarloAgent(BaseAgent):
         num_simulations: int = 100,
         rollout_depth: int = 6,
         seed: int | None = None,
+        include_draw_four: bool = False,
     ):
         if num_simulations <= 0:
             raise ValueError(
@@ -57,7 +68,9 @@ class MonteCarloAgent(BaseAgent):
         self._rng = random.Random(seed)
         # Fixed deck composition, not an actual UNOGame.
         self._reference_cards = tuple(
-            create_reference_cards()
+            create_reference_cards(
+                include_draw_four=include_draw_four
+            )
         )
 
     def choose_action(
@@ -71,7 +84,10 @@ class MonteCarloAgent(BaseAgent):
         # Equal-valued duplicate cards lead to the
         # same resulting hand, so evaluate them once.
         for card in dict.fromkeys(observation.legal_cards):
-            if card.card_type == CardType.WILD:
+            if card.card_type in (
+                    CardType.WILD,
+                    CardType.WILD_DRAW_FOUR,
+            ):
                 for color in REGULAR_COLORS:
                     candidates.append(
                         AgentDecision(
@@ -156,7 +172,10 @@ class MonteCarloAgent(BaseAgent):
                 )
                 unknown_cards.remove(next_card)
                 top_card = next_card
-                if next_card.card_type == CardType.WILD:
+                if next_card.card_type in (
+                        CardType.WILD,
+                        CardType.WILD_DRAW_FOUR,
+                ):
                     active_color = self._rng.choice(
                         REGULAR_COLORS
                     )
@@ -176,7 +195,10 @@ class MonteCarloAgent(BaseAgent):
                 )
                 remaining_hand.remove(selected)
                 top_card = selected
-                if selected.card_type == CardType.WILD:
+                if selected.card_type in (
+                        CardType.WILD,
+                        CardType.WILD_DRAW_FOUR,
+                ):
                     active_color = self._rng.choice(
                         REGULAR_COLORS
                     )

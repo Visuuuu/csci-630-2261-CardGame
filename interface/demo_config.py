@@ -21,6 +21,7 @@ def create_demo_controller(
     game_seed: int = 42,
     mc_simulations: int = 25,
     mc_depth: int = 3,
+    include_draw_four: bool = False,
 ) -> GameController:
     """Create a configurable four-player UNO match."""
     if len(agent_types) != 4:
@@ -56,10 +57,12 @@ def create_demo_controller(
                 num_simulations=mc_simulations,
                 rollout_depth=mc_depth,
                 seed=game_seed * 100 + player_id,
+                include_draw_four=include_draw_four,
             )
         agents.append(agent)
     return GameController(
         agents=agents,
         player_names=names,
         seed=game_seed,
+        include_draw_four=include_draw_four,
     )

@@ -35,7 +35,10 @@ class HeuristicAgent(BaseAgent):
                 card, observation
             ),
         )
-        if selected_card.card_type == CardType.WILD:
+        if selected_card.card_type in (
+                CardType.WILD,
+                CardType.WILD_DRAW_FOUR,
+        ):
             chosen_color = self._choose_wild_color(
                 observation.hand,
                 selected_card,
@@ -56,7 +59,10 @@ class HeuristicAgent(BaseAgent):
         remaining_hand = list(observation.hand)
         remaining_hand.remove(card)
         # Wild cards can be useful later.
-        if card.card_type == CardType.WILD:
+        if card.card_type in (
+                CardType.WILD,
+                CardType.WILD_DRAW_FOUR,
+        ):
             score += self.WILD_PENALTY
             # Wild cards become more useful to play
             # near the end of the game.
