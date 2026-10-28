@@ -1,7 +1,9 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
-from interface.four_agent_demo import (
-    create_four_agent_controller,
+from interface.demo_config import (
+    AGENT_TYPES,
+    DEFAULT_LINEUP,
+    create_demo_controller,
 )
 from interface.game_view import (
     get_game_view,
@@ -21,10 +23,13 @@ class UNOGUI:
         self.root.title("CSCI 630 - UNO AI Competition")
         self.root.geometry("1050x760")
         self.root.minsize(850, 650)
-        self.controller = create_four_agent_controller(
+        self.game_number = 0
+        self.agent_choices = list(DEFAULT_LINEUP)
+        self.controller = create_demo_controller(
+            agent_types=self.agent_choices,
             game_seed=42,
-            monte_carlo_simulations=25,
-            monte_carlo_depth=3,
+            mc_simulations=25,
+            mc_depth=3,
         )
         self.auto_playing = False
         self.after_id = None
@@ -63,6 +68,15 @@ class UNOGUI:
             bg=self.BACKGROUND,
         )
         self.status_label.pack(pady=5)
+        self.last_action_label = tk.Label(
+            header,
+            text="Game ready. Click Next Turn or Auto Play.",
+            font=("Arial", 11, "bold"),
+            fg="#FFD166",
+            bg=self.BACKGROUND,
+            wraplength=850,
+        )
+        self.last_action_label.pack(pady=4)
         # Main playing table
         self.table = tk.Frame(
             self.root,
@@ -135,14 +149,16 @@ class UNOGUI:
             text="",
             width=13,
             height=5,
-            font=("Arial", 18, "bold"),
-            fg="white",
+            font=("Arial", 20, "bold"),
+            fg="#FFFFFF",
             bg="#C73540",
             relief="ridge",
-            bd=4,
-            wraplength=150,
+            bd=5,
+            wraplength=145,
+            highlightthickness=3,
+            highlightbackground="#FFFFFF",
         )
-        self.card_display.pack(pady=8)
+        self.card_display.pack(pady=10)
         self.color_label = tk.Label(
             center,
             text="",
@@ -286,7 +302,7 @@ class UNOGUI:
         )
         cards_frame.pack(pady=5)
         # Limit visible cards to keep layout readable.
-        visible_cards = player_data["cards"][:10]
+        visible_cards = player_data["cards"][:8]
         for index, card_name in enumerate(
             visible_cards
         ):
@@ -304,7 +320,11 @@ class UNOGUI:
                 foreground = "#FFFFFF"
             tk.Label(
                 cards_frame,
-                text=card_name,
+                text=(
+                    card_name
+                    if self.reveal_hands.get()
+                    else "UNO\n★"
+                ),
                 font=("Arial", 8, "bold"),
                 bg=card_color,
                 fg=foreground,
@@ -313,12 +333,12 @@ class UNOGUI:
                 relief="raised",
                 wraplength=85,
             ).grid(
-                row=index // 5,
-                column=index % 5,
+                row=index // 4,
+                column=index % 4,
                 padx=2,
                 pady=2,
             )
-        extra = player_data["card_count"] - 10
+        extra = player_data["card_count"] - 8
         if extra > 0:
             tk.Label(
                 frame,
@@ -357,6 +377,7 @@ class UNOGUI:
         self.card_display.configure(
             text=view["top_card"],
             bg=view["top_card_color"],
+            highlightbackground=view["active_color_hex"],
         )
         self.color_label.configure(
             text=f"Active Color: {view['active_color']}",
@@ -422,6 +443,9 @@ class UNOGUI:
             f"{record.message} "
             f"({record.decision_time_ms:.3f} ms)"
         )
+        self.last_action_label.configure(
+            text=record.message
+        )
         self._refresh_display()
         if self.controller.game.game_over:
             self.pause_auto_play()
@@ -467,20 +491,102 @@ class UNOGUI:
             self.after_id = None
         self._refresh_display()
 
+
     def new_game(self):
-        """Start a new match with fresh agent instances."""
+        """Open a dialog to configure the next match."""
         self.pause_auto_play()
-        # Use a different seed for each new game.
-        self.game_number += 1
-        next_seed = 42 + self.game_number
-        self.controller = create_four_agent_controller(
-            game_seed=next_seed,
-            monte_carlo_simulations=25,
-            monte_carlo_depth=3,
+        dialog = tk.Toplevel(self.root)
+        dialog.title("Configure New UNO Game")
+        dialog.geometry("440x350")
+        dialog.resizable(False, False)
+        dialog.configure(bg=self.BACKGROUND)
+        dialog.transient(self.root)
+        dialog.grab_set()
+        tk.Label(
+            dialog,
+            text="SELECT AI STRATEGIES",
+            font=("Arial", 17, "bold"),
+            fg=self.TEXT,
+            bg=self.BACKGROUND,
+        ).pack(pady=18)
+        selections = []
+        for player_id in range(4):
+            row = tk.Frame(
+                dialog,
+                bg=self.BACKGROUND,
+            )
+            row.pack(fill="x", padx=35, pady=8)
+            tk.Label(
+                row,
+                text=f"Player {player_id}",
+                font=("Arial", 11),
+                fg=self.TEXT,
+                bg=self.BACKGROUND,
+                width=12,
+                anchor="w",
+            ).pack(side="left")
+            selected = tk.StringVar(
+                value=self.agent_choices[player_id]
+            )
+            ttk.Combobox(
+                row,
+                textvariable=selected,
+                values=AGENT_TYPES,
+                state="readonly",
+                width=19,
+            ).pack(side="right")
+            selections.append(selected)
+        buttons = tk.Frame(
+            dialog,
+            bg=self.BACKGROUND,
         )
+        buttons.pack(pady=20)
+        ttk.Button(
+            buttons,
+            text="Start New Game",
+            command=lambda: self._start_configured_game(
+                [item.get() for item in selections],
+                dialog,
+            ),
+        ).pack(side="left", padx=8)
+        ttk.Button(
+            buttons,
+            text="Cancel",
+            command=dialog.destroy,
+        ).pack(side="left", padx=8)
+
+    def _start_configured_game(
+        self,
+        agent_types: list[str],
+        dialog: tk.Toplevel,
+    ):
+        """Create a new match from the selected agents."""
+        next_seed = 42 + self.game_number + 1
+        try:
+            new_controller = create_demo_controller(
+                agent_types=agent_types,
+                game_seed=next_seed,
+                mc_simulations=25,
+                mc_depth=3,
+            )
+        except (ValueError, TypeError) as error:
+            messagebox.showerror(
+                "Invalid Game Configuration",
+                str(error),
+                parent=dialog,
+            )
+            return
+        self.pause_auto_play()
+        self.controller = new_controller
+        self.agent_choices = list(agent_types)
+        self.game_number += 1
         self.history_text.configure(state="normal")
         self.history_text.delete("1.0", "end")
         self.history_text.configure(state="disabled")
+        self.last_action_label.configure(
+            text="New game started. Choose Next Turn or Auto Play."
+        )
+        dialog.destroy()
         self._refresh_display()
 
     def _close_window(self):
