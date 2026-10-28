@@ -15,6 +15,7 @@ class FourAgentConfig:
     base_seed: int = 42
     mc_simulations: int = 25
     mc_depth: int = 3
+    include_draw_four: bool = False
 
 
 class FourAgentExperiment:
@@ -85,13 +86,18 @@ class FourAgentExperiment:
                         + game_index * 10
                         + 4
                     ),
+                    include_draw_four=self.config.include_draw_four,
                 )
             agents.append(agent)
         return GameController(
             agents=agents,
             player_names=list(lineup),
             seed=self.config.base_seed + game_index,
+            include_draw_four=(
+                self.config.include_draw_four
+            ),
         )
+
 
     def run(self, verbose: bool = True) -> dict:
         """Run matches and calculate performance metrics."""
