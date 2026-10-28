@@ -10,6 +10,7 @@ from interface.game_view import (
     color_hex,
 )
 from uno_game.card import Color
+from interface.async_turn import AsyncTurnRunner
 
 
 class UNOGUI:
@@ -31,6 +32,8 @@ class UNOGUI:
             mc_simulations=25,
             mc_depth=3,
         )
+        self.turn_runner = AsyncTurnRunner(self.controller)
+        self.poll_after_id = None
         self.auto_playing = False
         self.after_id = None
         self.game_number = 0
@@ -227,6 +230,38 @@ class UNOGUI:
             width=6,
             state="readonly",
         ).pack(side="left", padx=5)
+        # Live AI performance statistics
+        stats_frame = tk.Frame(
+            self.root,
+            bg=self.PANEL,
+            padx=12,
+            pady=8,
+        )
+        stats_frame.pack(
+            fill="x",
+            padx=25,
+            pady=6,
+        )
+        tk.Label(
+            stats_frame,
+            text="LIVE AI PERFORMANCE",
+            font=("Arial", 11, "bold"),
+            fg=self.TEXT,
+            bg=self.PANEL,
+        ).pack(anchor="w", pady=(0, 6))
+        self.stats_label = tk.Label(
+            stats_frame,
+            text="",
+            font=("Consolas", 10),
+            fg=self.TEXT,
+            bg=self.PANEL,
+            justify="left",
+            anchor="w",
+        )
+        self.stats_label.pack(
+            fill="x",
+            anchor="w",
+        )
         # Action history
         history_frame = tk.Frame(
             self.root,
@@ -395,10 +430,11 @@ class UNOGUI:
                 f"{view['direction']}"
             )
         self.status_label.configure(text=status)
+        busy = self.turn_runner.is_busy
         self.next_button.configure(
             state=(
                 "disabled"
-                if game.game_over or self.auto_playing
+                if game.game_over or busy or self.auto_playing
                 else "normal"
             )
         )
@@ -413,6 +449,7 @@ class UNOGUI:
             state="normal" if self.auto_playing
             else "disabled"
         )
+        self._refresh_statistics()
 
     def _append_history(self, message: str):
         """Display an AI move in the action log."""
@@ -426,17 +463,55 @@ class UNOGUI:
         )
 
     def next_turn(self):
-        """Execute one AI turn."""
-        if self.controller.game.game_over:
+        """Start one background AI decision."""
+        if (
+            self.controller.game.game_over
+            or self.turn_runner.is_busy
+        ):
             return
         try:
-            record = self.controller.step()
+            self.turn_runner.request_turn()
         except Exception as error:
             self.pause_auto_play()
             messagebox.showerror(
-                "UNO Game Error",
+                "UNO AI Error",
                 str(error),
             )
+            return
+        self.last_action_label.configure(
+            text=(
+                f"{self.controller.game.current_player.name}"
+                " is thinking..."
+            )
+        )
+        self._refresh_display()
+        self.poll_after_id = self.root.after(
+            30,
+            self._poll_turn,
+        )
+
+    def _poll_turn(self):
+        """Check for a finished AI decision."""
+        self.poll_after_id = None
+        try:
+            record = self.turn_runner.poll()
+        except Exception as error:
+            self.pause_auto_play()
+            self.last_action_label.configure(
+                text="An AI decision failed."
+            )
+            messagebox.showerror(
+                "UNO Turn Error",
+                str(error),
+            )
+            self._refresh_display()
+            return
+        if record is None:
+            if self.turn_runner.is_busy:
+                self.poll_after_id = self.root.after(
+                    30,
+                    self._poll_turn,
+                )
             return
         self._append_history(
             f"Turn {record.turn_number:03d}: "
@@ -453,24 +528,28 @@ class UNOGUI:
                 "Game Finished",
                 f"Winner: {self.controller.game.winner.name}",
             )
-
-    def _auto_step(self):
-        """Execute a turn and schedule the next one."""
-        self.after_id = None
-        if not self.auto_playing:
             return
-        self.next_turn()
-        if (
-            self.auto_playing
-            and not self.controller.game.game_over
-        ):
+        # Continue automatic playback only if
+        # the user has not pressed Pause.
+        if self.auto_playing:
             self.after_id = self.root.after(
                 self.speed_ms.get(),
                 self._auto_step,
             )
 
+    def _auto_step(self):
+        """Start the next automatic AI turn."""
+        self.after_id = None
+        if (
+            not self.auto_playing
+            or self.controller.game.game_over
+            or self.turn_runner.is_busy
+        ):
+            return
+        self.next_turn()
+
     def start_auto_play(self):
-        """Start automatically advancing turns."""
+        """Start or resume automatic playback."""
         if (
             self.auto_playing
             or self.controller.game.game_over
@@ -478,10 +557,13 @@ class UNOGUI:
             return
         self.auto_playing = True
         self._refresh_display()
-        self.after_id = self.root.after(
-            self.speed_ms.get(),
-            self._auto_step,
-        )
+        # If an AI decision is already running,
+        # its completion will schedule the next turn.
+        if not self.turn_runner.is_busy:
+            self.after_id = self.root.after(
+                self.speed_ms.get(),
+                self._auto_step,
+            )
 
     def pause_auto_play(self):
         """Stop automatic play."""
@@ -491,9 +573,63 @@ class UNOGUI:
             self.after_id = None
         self._refresh_display()
 
+    def _refresh_statistics(self):
+        """Update each AI player's live performance data."""
+        game = self.controller.game
+        history = self.controller.turn_history
+
+        # Reveal hand points only in demo mode
+        # or after the game is finished.
+        show_points = (
+            self.reveal_hands.get()
+            or game.game_over
+        )
+        header = (
+            f"{'Player':<22}"
+            f"{'Cards':>7}"
+            f"{'Decisions':>11}"
+            f"{'Avg ms':>12}"
+            f"{'Points':>9}"
+        )
+        lines = [
+            header,
+            "-" * 65,
+        ]
+        for player in game.players:
+            durations = [
+                record.decision_time_ms
+                for record in history
+                if record.player_id == player.player_id
+            ]
+            average_ms = (
+                sum(durations) / len(durations)
+                if durations
+                else 0.0
+            )
+            points = (
+                str(player.hand_points())
+                if show_points
+                else "Hidden"
+            )
+            lines.append(
+                f"{player.name[:22]:<22}"
+                f"{player.hand_size():>7}"
+                f"{len(durations):>11}"
+                f"{average_ms:>12.4f}"
+                f"{points:>9}"
+            )
+        self.stats_label.configure(
+            text="\n".join(lines)
+        )
 
     def new_game(self):
         """Open a dialog to configure the next match."""
+        if self.turn_runner.is_busy:
+            messagebox.showinfo(
+                "AI Decision in Progress",
+                "Finish the current AI decision before starting a new game.",
+            )
+            return
         self.pause_auto_play()
         dialog = tk.Toplevel(self.root)
         dialog.title("Configure New UNO Game")
@@ -577,7 +713,9 @@ class UNOGUI:
             )
             return
         self.pause_auto_play()
+        self.turn_runner.close()
         self.controller = new_controller
+        self.turn_runner = AsyncTurnRunner(self.controller)
         self.agent_choices = list(agent_types)
         self.game_number += 1
         self.history_text.configure(state="normal")
@@ -591,6 +729,10 @@ class UNOGUI:
 
     def _close_window(self):
         self.pause_auto_play()
+        if self.poll_after_id is not None:
+            self.root.after_cancel(self.poll_after_id)
+            self.poll_after_id = None
+        self.turn_runner.close()
         self.root.destroy()
 
 
