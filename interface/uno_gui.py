@@ -3,6 +3,7 @@ from tkinter import ttk, messagebox
 from interface.demo_config import (
     AGENT_TYPES,
     DEFAULT_LINEUP,
+    V1_V2_DEMO_LINEUP,
     create_demo_controller,
 )
 from interface.game_view import (
@@ -586,7 +587,7 @@ class UNOGUI:
             or game.game_over
         )
         header = (
-            f"{'Player':<22}"
+            f"{'Player':<25}"
             f"{'Cards':>7}"
             f"{'Decisions':>11}"
             f"{'Avg ms':>12}"
@@ -613,7 +614,7 @@ class UNOGUI:
                 else "Hidden"
             )
             lines.append(
-                f"{player.name[:22]:<22}"
+                f"{player.name[:25]:<25}"
                 f"{player.hand_size():>7}"
                 f"{len(durations):>11}"
                 f"{average_ms:>12.4f}"
@@ -634,7 +635,7 @@ class UNOGUI:
         self.pause_auto_play()
         dialog = tk.Toplevel(self.root)
         dialog.title("Configure New UNO Game")
-        dialog.geometry("440x390")
+        dialog.geometry("440x445")
         dialog.resizable(False, False)
         dialog.configure(bg=self.BACKGROUND)
         dialog.transient(self.root)
@@ -673,6 +674,18 @@ class UNOGUI:
                 width=19,
             ).pack(side="right")
             selections.append(selected)
+        # Quick setup for comparing Monte Carlo versions.
+        def apply_v1_v2_preset():
+            for selected, strategy in zip(
+                selections,
+                V1_V2_DEMO_LINEUP,
+            ):
+                selected.set(strategy)
+        ttk.Button(
+            dialog,
+            text="Use Monte Carlo V1 vs V2 Preset",
+            command=apply_v1_v2_preset,
+        ).pack(pady=8)
         # Wild Draw Four game option
         draw_four_var = tk.BooleanVar(
             value=self.include_draw_four

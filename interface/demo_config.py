@@ -4,6 +4,8 @@ from agents.heuristic_agent import HeuristicAgent
 from agents.monte_carlo_agent import MonteCarloAgent
 from agents.random_agent import RandomAgent
 from interface.game_controller import GameController
+from agents.monte_carlo_v2_agent import MonteCarloV2Agent
+
 
 
 AGENT_TYPES = (
@@ -11,9 +13,25 @@ AGENT_TYPES = (
     "Greedy",
     "Heuristic",
     "Monte Carlo",
+    "Monte Carlo V2",
 )
 
-DEFAULT_LINEUP = AGENT_TYPES
+# Preserve the original four-player default.
+DEFAULT_LINEUP = (
+    "Random",
+    "Greedy",
+    "Heuristic",
+    "Monte Carlo",
+)
+
+# Convenient classroom demonstration setup.
+V1_V2_DEMO_LINEUP = (
+    "Monte Carlo",
+    "Monte Carlo V2",
+    "Greedy",
+    "Heuristic",
+)
+
 
 
 def create_demo_controller(
@@ -52,8 +70,17 @@ def create_demo_controller(
             agent = GreedyAgent()
         elif agent_type == "Heuristic":
             agent = HeuristicAgent()
-        else:
+        elif agent_type == "Monte Carlo":
+            # Original Monte Carlo V1
             agent = MonteCarloAgent(
+                num_simulations=mc_simulations,
+                rollout_depth=mc_depth,
+                seed=game_seed * 100 + player_id,
+                include_draw_four=include_draw_four,
+            )
+        elif agent_type == "Monte Carlo V2":
+            # Improved legal-transition rollout model
+            agent = MonteCarloV2Agent(
                 num_simulations=mc_simulations,
                 rollout_depth=mc_depth,
                 seed=game_seed * 100 + player_id,
