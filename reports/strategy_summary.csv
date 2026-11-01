@@ -1,0 +1,3 @@
+strategy,wins,win_share_pct,average_hand_points,average_decision_ms,decisions,appearances
+Random,23,57.5,22.575,0.00042026516820906236,1143,80
+Greedy,17,42.5,17.7125,0.0005048666667451204,1155,80

@@ -1,0 +1,97 @@
+game_number,completed,winner,turns,seat,strategy,won,remaining_hand_points
+1,True,Monte Carlo,25,0,Random,0,11
+1,True,Monte Carlo,25,1,Greedy,0,15
+1,True,Monte Carlo,25,2,Heuristic,0,3
+1,True,Monte Carlo,25,3,Monte Carlo,1,0
+2,True,Monte Carlo,118,0,Random,0,33
+2,True,Monte Carlo,118,1,Greedy,0,37
+2,True,Monte Carlo,118,2,Monte Carlo,1,0
+2,True,Monte Carlo,118,3,Heuristic,0,2
+3,True,Heuristic,38,0,Random,0,6
+3,True,Heuristic,38,1,Heuristic,1,0
+3,True,Heuristic,38,2,Greedy,0,25
+3,True,Heuristic,38,3,Monte Carlo,0,65
+4,True,Random,51,0,Random,1,0
+4,True,Random,51,1,Heuristic,0,15
+4,True,Random,51,2,Monte Carlo,0,10
+4,True,Random,51,3,Greedy,0,8
+5,True,Monte Carlo,34,0,Random,0,39
+5,True,Monte Carlo,34,1,Monte Carlo,1,0
+5,True,Monte Carlo,34,2,Greedy,0,38
+5,True,Monte Carlo,34,3,Heuristic,0,56
+6,True,Random,47,0,Random,1,0
+6,True,Random,47,1,Monte Carlo,0,24
+6,True,Random,47,2,Heuristic,0,14
+6,True,Random,47,3,Greedy,0,28
+7,True,Random,66,0,Greedy,0,24
+7,True,Random,66,1,Random,1,0
+7,True,Random,66,2,Heuristic,0,12
+7,True,Random,66,3,Monte Carlo,0,26
+8,True,Monte Carlo,25,0,Greedy,0,22
+8,True,Monte Carlo,25,1,Random,0,44
+8,True,Monte Carlo,25,2,Monte Carlo,1,0
+8,True,Monte Carlo,25,3,Heuristic,0,11
+9,True,Greedy,30,0,Greedy,1,0
+9,True,Greedy,30,1,Heuristic,0,6
+9,True,Greedy,30,2,Random,0,53
+9,True,Greedy,30,3,Monte Carlo,0,20
+10,True,Greedy,33,0,Greedy,1,0
+10,True,Greedy,33,1,Heuristic,0,28
+10,True,Greedy,33,2,Monte Carlo,0,10
+10,True,Greedy,33,3,Random,0,69
+11,True,Monte Carlo,38,0,Greedy,0,34
+11,True,Monte Carlo,38,1,Monte Carlo,1,0
+11,True,Monte Carlo,38,2,Random,0,43
+11,True,Monte Carlo,38,3,Heuristic,0,5
+12,True,Greedy,27,0,Greedy,1,0
+12,True,Greedy,27,1,Monte Carlo,0,18
+12,True,Greedy,27,2,Heuristic,0,2
+12,True,Greedy,27,3,Random,0,42
+13,True,Greedy,44,0,Heuristic,0,6
+13,True,Greedy,44,1,Random,0,52
+13,True,Greedy,44,2,Greedy,1,0
+13,True,Greedy,44,3,Monte Carlo,0,2
+14,True,Monte Carlo,57,0,Heuristic,0,10
+14,True,Monte Carlo,57,1,Random,0,17
+14,True,Monte Carlo,57,2,Monte Carlo,1,0
+14,True,Monte Carlo,57,3,Greedy,0,37
+15,True,Heuristic,31,0,Heuristic,1,0
+15,True,Heuristic,31,1,Greedy,0,10
+15,True,Heuristic,31,2,Random,0,63
+15,True,Heuristic,31,3,Monte Carlo,0,2
+16,True,Random,62,0,Heuristic,0,5
+16,True,Random,62,1,Greedy,0,2
+16,True,Random,62,2,Monte Carlo,0,11
+16,True,Random,62,3,Random,1,0
+17,True,Greedy,116,0,Heuristic,0,7
+17,True,Greedy,116,1,Monte Carlo,0,44
+17,True,Greedy,116,2,Random,0,24
+17,True,Greedy,116,3,Greedy,1,0
+18,True,Heuristic,59,0,Heuristic,1,0
+18,True,Heuristic,59,1,Monte Carlo,0,31
+18,True,Heuristic,59,2,Greedy,0,6
+18,True,Heuristic,59,3,Random,0,11
+19,True,Greedy,74,0,Monte Carlo,0,36
+19,True,Greedy,74,1,Random,0,11
+19,True,Greedy,74,2,Greedy,1,0
+19,True,Greedy,74,3,Heuristic,0,16
+20,True,Monte Carlo,43,0,Monte Carlo,1,0
+20,True,Monte Carlo,43,1,Random,0,23
+20,True,Monte Carlo,43,2,Heuristic,0,20
+20,True,Monte Carlo,43,3,Greedy,0,55
+21,True,Heuristic,49,0,Monte Carlo,0,59
+21,True,Heuristic,49,1,Greedy,0,31
+21,True,Heuristic,49,2,Random,0,13
+21,True,Heuristic,49,3,Heuristic,1,0
+22,True,Greedy,64,0,Monte Carlo,0,38
+22,True,Greedy,64,1,Greedy,1,0
+22,True,Greedy,64,2,Heuristic,0,12
+22,True,Greedy,64,3,Random,0,46
+23,True,Monte Carlo,32,0,Monte Carlo,1,0
+23,True,Monte Carlo,32,1,Heuristic,0,13
+23,True,Monte Carlo,32,2,Random,0,32
+23,True,Monte Carlo,32,3,Greedy,0,40
+24,True,Greedy,62,0,Monte Carlo,0,3
+24,True,Greedy,62,1,Heuristic,0,6
+24,True,Greedy,62,2,Greedy,1,0
+24,True,Greedy,62,3,Random,0,60

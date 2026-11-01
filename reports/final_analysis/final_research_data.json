@@ -1,0 +1,20 @@
+{
+  "generated_at_utc": "2026-11-01T21:56:22.419347+00:00",
+  "comparison": {
+    "v1_win_rate_pct": 33.333333333333336,
+    "v2_win_rate_pct": 37.5,
+    "win_rate_change_pp": 4.166666666666664,
+    "decision_time_change_ms": 0.721506319122506,
+    "hand_points_change": 2.75,
+    "highest_observed_win_rate_budget": 100,
+    "lowest_observed_decision_time_budget": 25
+  },
+  "paired": {
+    "both_win": 5,
+    "v1_only": 3,
+    "v2_only": 4,
+    "neither_wins": 12,
+    "total_pairs": 24,
+    "mean_points_change_v2_minus_v1": 2.75
+  }
+}

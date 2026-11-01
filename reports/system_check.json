@@ -1,0 +1,94 @@
+{
+  "check_name": "CSCI 630 UNO System Integration",
+  "generated_at_utc": "2026-11-01T23:44:06.290880+00:00",
+  "configuration": {
+    "game_seed": 42,
+    "max_turns": 40,
+    "mc_simulations": 3,
+    "mc_depth": 2
+  },
+  "scenarios_run": 4,
+  "scenarios_passed": 4,
+  "results": [
+    {
+      "ruleset": "104-card baseline",
+      "lineup": [
+        "Random",
+        "Greedy",
+        "Heuristic",
+        "Monte Carlo"
+      ],
+      "seed": 42,
+      "initial_draw_pile": 75,
+      "turns": 40,
+      "max_turns": 40,
+      "hand_points": {
+        "P0 - Random": 36,
+        "P1 - Greedy": 37,
+        "P2 - Heuristic": 31,
+        "P3 - Monte Carlo": 40
+      },
+      "passed": true
+    },
+    {
+      "ruleset": "104-card baseline",
+      "lineup": [
+        "Monte Carlo",
+        "Monte Carlo V2",
+        "Greedy",
+        "Heuristic"
+      ],
+      "seed": 42,
+      "initial_draw_pile": 75,
+      "turns": 30,
+      "max_turns": 40,
+      "hand_points": {
+        "P0 - Monte Carlo": 45,
+        "P1 - Monte Carlo V2": 0,
+        "P2 - Greedy": 41,
+        "P3 - Heuristic": 26
+      },
+      "passed": true
+    },
+    {
+      "ruleset": "108-card extended",
+      "lineup": [
+        "Random",
+        "Greedy",
+        "Heuristic",
+        "Monte Carlo"
+      ],
+      "seed": 42,
+      "initial_draw_pile": 79,
+      "turns": 40,
+      "max_turns": 40,
+      "hand_points": {
+        "P0 - Random": 56,
+        "P1 - Greedy": 28,
+        "P2 - Heuristic": 55,
+        "P3 - Monte Carlo": 52
+      },
+      "passed": true
+    },
+    {
+      "ruleset": "108-card extended",
+      "lineup": [
+        "Monte Carlo",
+        "Monte Carlo V2",
+        "Greedy",
+        "Heuristic"
+      ],
+      "seed": 42,
+      "initial_draw_pile": 79,
+      "turns": 24,
+      "max_turns": 40,
+      "hand_points": {
+        "P0 - Monte Carlo": 58,
+        "P1 - Monte Carlo V2": 0,
+        "P2 - Greedy": 50,
+        "P3 - Heuristic": 58
+      },
+      "passed": true
+    }
+  ]
+}
