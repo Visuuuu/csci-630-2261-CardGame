@@ -12,7 +12,7 @@ from interface.demo_config import (
 
 class TestDemoConfig(unittest.TestCase):
 
-    def test_four_strategies_available(self):
+    def test_five_strategies_available(self):
         self.assertEqual(
             set(AGENT_TYPES),
             {
@@ -20,8 +20,10 @@ class TestDemoConfig(unittest.TestCase):
                 "Greedy",
                 "Heuristic",
                 "Monte Carlo",
+                "Monte Carlo V2",
             },
         )
+        self.assertEqual(len(AGENT_TYPES), 5)
 
     def test_default_lineup(self):
         controller = create_demo_controller(
