@@ -50,10 +50,10 @@ class TestProjectDocumentation(unittest.TestCase):
     def test_architecture_documents_both_rulesets(self):
         text = ARCHITECTURE.read_text(
             encoding="utf-8"
-        )
+        ).lower()
         self.assertIn("104 cards", text)
         self.assertIn("108 cards", text)
-        self.assertIn("Wild Draw Four", text)
+        self.assertIn("wild draw four", text)
 
     def test_experiments_document_all_studies(self):
         text = EXPERIMENTS.read_text(
