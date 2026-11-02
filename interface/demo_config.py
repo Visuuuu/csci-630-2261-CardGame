@@ -5,6 +5,7 @@ from agents.monte_carlo_agent import MonteCarloAgent
 from agents.random_agent import RandomAgent
 from interface.game_controller import GameController
 from agents.monte_carlo_v2_agent import MonteCarloV2Agent
+from agents.human_player import HumanPlayer
 
 
 
@@ -47,7 +48,7 @@ def create_demo_controller(
             "Exactly four agent assignments are required."
         )
     for agent_type in agent_types:
-        if agent_type not in AGENT_TYPES:
+        if agent_type not in (*AGENT_TYPES, "Human"):
             raise ValueError(
                 f"Unknown agent strategy: {agent_type}"
             )
@@ -55,14 +56,16 @@ def create_demo_controller(
         raise ValueError(
             "Monte Carlo settings must be positive."
         )
-    agents: list[BaseAgent] = []
+    agents: list[BaseAgent | HumanPlayer] = []
     names = []
     for player_id, agent_type in enumerate(agent_types):
         # Player IDs keep names unique, including
         # when two players use the same strategy.
         name = f"P{player_id} - {agent_type}"
         names.append(name)
-        if agent_type == "Random":
+        if agent_type == "Human":
+            agent = HumanPlayer(name=name)
+        elif agent_type == "Random":
             agent = RandomAgent(
                 seed=game_seed * 100 + player_id
             )

@@ -42,6 +42,8 @@ class UNOGUI:
         self.reveal_hands = tk.BooleanVar(
             value=False
         )
+        # Human hands start hidden until the player is ready.
+        self.human_hand_unlocked = False
         self.speed_ms = tk.IntVar(value=800)
         self.root.configure(bg=self.BACKGROUND)
         self._build_interface()
@@ -180,6 +182,52 @@ class UNOGUI:
             bg=self.BACKGROUND,
         )
         self.deck_label.pack(pady=5)
+        # Controls for the current human player.
+        self.human_frame = tk.Frame(
+            self.root,
+            bg=self.PANEL,
+            padx=12,
+            pady=10,
+        )
+        self.human_frame.pack(
+            fill="x",
+            padx=25,
+            pady=5,
+        )
+        self.human_title = tk.Label(
+            self.human_frame,
+            text="Human Player",
+            font=("Arial", 12, "bold"),
+            fg=self.TEXT,
+            bg=self.PANEL,
+        )
+        self.human_title.pack(pady=4)
+        self.human_reveal_button = ttk.Button(
+            self.human_frame,
+            text="Reveal My Hand",
+            command=self._reveal_human_hand,
+        )
+        self.human_reveal_button.pack(pady=8)
+        self.human_cards_frame = tk.Frame(
+            self.human_frame,
+            bg=self.PANEL,
+        )
+        self.human_cards_frame.pack(
+            fill="x",
+            pady=5,
+        )
+        self.human_draw_button = ttk.Button(
+            self.human_frame,
+            text="Draw Card",
+            command=self._draw_human_card,
+        )
+        self.human_reveal_button = ttk.Button(
+            self.human_frame,
+            text="Reveal My Hand",
+            command=self._reveal_human_hand,
+        )
+        self.human_reveal_button.pack(pady=8)
+
         # Controls
         controls = tk.Frame(
             self.root,
@@ -215,12 +263,16 @@ class UNOGUI:
             text="New Game",
             command=self.new_game,
         ).pack(side="left", padx=8)
-        ttk.Checkbutton(
+        self.reveal_checkbox = ttk.Checkbutton(
             controls,
             text="Reveal All Hands (Demo)",
             variable=self.reveal_hands,
             command=self._refresh_display,
-        ).pack(side="left", padx=8)
+        )
+        self.reveal_checkbox.pack(
+            side="left",
+            padx=8,
+        )
         ttk.Label(
             controls,
             text="Delay (ms):",
@@ -397,9 +449,221 @@ class UNOGUI:
                 return color_hex(color)
         return color_hex(Color.WILD)
 
+    def _reveal_human_hand(self):
+        """Reveal the current human's cards when ready."""
+        if (
+            self.controller.game.game_over
+            or not self.controller.is_human_turn
+            or self.turn_runner.is_busy
+        ):
+            return
+        self.human_hand_unlocked = True
+        self._refresh_display()
+
+
+    def _refresh_human_controls(self):
+        """Display the current human hand privately."""
+        game = self.controller.game
+        if game.game_over or not self.controller.is_human_turn:
+            self.human_frame.pack_forget()
+            return
+        self.human_frame.pack(
+            fill="x",
+            padx=25,
+            pady=5,
+            before=self.next_button.master,
+        )
+        player = game.current_player
+        # Clear cards left over from the previous player.
+        for widget in self.human_cards_frame.winfo_children():
+            widget.destroy()
+        if not self.human_hand_unlocked:
+            self.human_title.configure(
+                text=(
+                    f"{player.name}'s Turn\n"
+                    "Pass the computer to this player."
+                )
+            )
+            self.human_reveal_button.pack(pady=8)
+            self.human_draw_button.pack_forget()
+            return
+        # The current player has acknowledged the handoff.
+        self.human_reveal_button.pack_forget()
+        self.human_title.configure(
+            text=f"{player.name} - Choose a Card"
+        )
+        legal_cards = game.get_current_legal_cards()
+        for index, card in enumerate(player.hand):
+            is_legal = card in legal_cards
+            card_button = tk.Button(
+                self.human_cards_frame,
+                text=str(card),
+                width=12,
+                height=2,
+                wraplength=90,
+                font=("Arial", 9, "bold"),
+                bg=self._card_background(str(card)),
+                fg="white",
+                state="normal" if is_legal else "disabled",
+                command=lambda selected=card:
+                    self._play_human_card(selected),
+            )
+            card_button.grid(
+                row=index // 7,
+                column=index % 7,
+                padx=3,
+                pady=3,
+            )
+        self.human_draw_button.pack(pady=5)
+        self.human_draw_button.configure(
+            state="normal" if not legal_cards else "disabled"
+        )
+
+    def _choose_human_color(self):
+        """Ask the human to choose a Wild card color."""
+        result = {"color": None}
+        dialog = tk.Toplevel(self.root)
+        dialog.title("Choose Wild Color")
+        dialog.geometry("300x190")
+        dialog.resizable(False, False)
+        dialog.transient(self.root)
+        dialog.grab_set()
+        tk.Label(
+            dialog,
+            text="Choose the next color:",
+            font=("Arial", 13, "bold"),
+        ).pack(pady=12)
+        buttons = tk.Frame(dialog)
+        buttons.pack(pady=8)
+        colors = (
+            Color.RED,
+            Color.YELLOW,
+            Color.GREEN,
+            Color.BLUE,
+        )
+        def select_color(color):
+            result["color"] = color
+            dialog.destroy()
+        for index, color in enumerate(colors):
+            tk.Button(
+                buttons,
+                text=color.value,
+                bg=color_hex(color),
+                fg="black" if color == Color.YELLOW else "white",
+                width=10,
+                command=lambda selected=color:
+                    select_color(selected),
+            ).grid(
+                row=index // 2,
+                column=index % 2,
+                padx=5,
+                pady=5,
+            )
+        self.root.wait_window(dialog)
+        return result["color"]
+
+
+    def _play_human_card(self, card):
+        """Submit a card selected by the human."""
+        if not self.human_hand_unlocked:
+            return
+        if (
+            self.controller.game.game_over
+            or not self.controller.is_human_turn
+            or self.turn_runner.is_busy
+        ):
+            return
+        legal_cards = (
+            self.controller.game.get_current_legal_cards()
+        )
+        if card not in legal_cards:
+            return
+        chosen_color = None
+        if card.color == Color.WILD:
+            chosen_color = self._choose_human_color()
+
+            if chosen_color is None:
+                return
+        self._submit_human_move(
+            card=card,
+            chosen_color=chosen_color,
+        )
+
+    def _draw_human_card(self):
+        """Draw when the human has no legal card."""
+        if not self.human_hand_unlocked:
+            return
+        if (
+            self.controller.game.game_over
+            or not self.controller.is_human_turn
+            or self.turn_runner.is_busy
+        ):
+            return
+        if self.controller.game.get_current_legal_cards():
+            return
+        self._submit_human_move(card=None)
+
+
+    def _submit_human_move(
+        self,
+        card=None,
+        chosen_color=None,
+    ):
+        """Execute a human move and update the GUI."""
+        try:
+            record = self.controller.submit_human_turn(
+                card=card,
+                chosen_color=chosen_color,
+            )
+        except (ValueError, TypeError) as error:
+            messagebox.showerror(
+                "Invalid Move",
+                str(error),
+            )
+            return
+        # Hide cards before handing the computer to
+        # the next player.
+        self.human_hand_unlocked = False
+        self._append_history(
+            f"Turn {record.turn_number:03d}: "
+            f"{record.message}"
+        )
+        self.last_action_label.configure(
+            text=record.message
+        )
+        self._refresh_display()
+        if self.controller.game.game_over:
+            self.pause_auto_play()
+            messagebox.showinfo(
+                "Game Finished",
+                f"Winner: {self.controller.game.winner.name}",
+            )
+            return
+        if (
+            self.auto_playing
+            and not self.controller.is_human_turn
+        ):
+            self.after_id = self.root.after(
+                self.speed_ms.get(),
+                self._auto_step,
+            )
+
     def _refresh_display(self):
         """Refresh every visible component."""
         game = self.controller.game
+        has_human = any(
+            getattr(agent, "is_human", False)
+            for agent in self.controller.agents
+        )
+        if has_human:
+            self.reveal_hands.set(False)
+            self.reveal_checkbox.configure(
+                state="disabled"
+            )
+        else:
+            self.reveal_checkbox.configure(
+                state="normal"
+            )
         view = get_game_view(
             game,
             reveal_hands=self.reveal_hands.get(),
@@ -451,6 +715,7 @@ class UNOGUI:
             state="normal" if self.auto_playing
             else "disabled"
         )
+        self._refresh_human_controls()
         self._refresh_statistics()
 
     def _append_history(self, message: str):
@@ -479,6 +744,15 @@ class UNOGUI:
                 "UNO AI Error",
                 str(error),
             )
+            return
+        if self.controller.is_human_turn:
+            self.last_action_label.configure(
+                text=(
+                    f"{self.controller.game.current_player.name}, "
+                    "choose a card from your hand."
+                )
+            )
+            self._refresh_display()
             return
         self.last_action_label.configure(
             text=(
@@ -515,6 +789,8 @@ class UNOGUI:
                     self._poll_turn,
                 )
             return
+        # Any incoming human turn must start hidden.
+        self.human_hand_unlocked = False
         self._append_history(
             f"Turn {record.turn_number:03d}: "
             f"{record.message} "
@@ -547,6 +823,12 @@ class UNOGUI:
             or self.controller.game.game_over
             or self.turn_runner.is_busy
         ):
+            return
+        if self.controller.is_human_turn:
+            self.last_action_label.configure(
+                text="Waiting for the human player..."
+            )
+            self._refresh_display()
             return
         self.next_turn()
 
@@ -642,7 +924,7 @@ class UNOGUI:
         dialog.grab_set()
         tk.Label(
             dialog,
-            text="SELECT AI STRATEGIES",
+            text="SELECT PLAYERS",
             font=("Arial", 17, "bold"),
             fg=self.TEXT,
             bg=self.BACKGROUND,
@@ -669,7 +951,7 @@ class UNOGUI:
             ttk.Combobox(
                 row,
                 textvariable=selected,
-                values=AGENT_TYPES,
+                values=("Human", *AGENT_TYPES),
                 state="readonly",
                 width=19,
             ).pack(side="right")
@@ -748,6 +1030,9 @@ class UNOGUI:
         # Save the settings for the next dialog.
         self.agent_choices = list(agent_types)
         self.include_draw_four = include_draw_four
+        self.human_hand_unlocked = False
+        if "Human" in agent_types:
+            self.reveal_hands.set(False)
         self.game_number += 1
         # Clear previous game history.
         self.history_text.configure(state="normal")

@@ -1,4 +1,3 @@
-
 # Comparative AI Agents for a Strategic Card Game
 
 **Course:** CSCI 630  
@@ -8,57 +7,41 @@
 
 ## Overview
 
-This project implements a four-player UNO-style card game
-in Python to compare several artificial intelligence
-decision-making strategies under controlled conditions.
+This project is a four-player UNO-style card game built in Python to compare different AI decision-making strategies. All agents play using the same game rules, so their performance can be measured under consistent conditions.
 
-The four primary strategies are:
+The four main strategies are Random, Greedy, Heuristic (Rule-Based), and Monte Carlo. The project also includes Monte Carlo V2, an additional version that samples hypothetical legal opponent moves during simulations.
 
-1. Random Agent
-2. Greedy Agent
-3. Heuristic / Rule-Based Agent
-4. Monte Carlo Agent
+The project includes:
 
-An additional Monte Carlo V2 implementation investigates
-whether sampling legal hypothetical opponent moves changes
-performance compared with the original Monte Carlo model.
+- A separate UNO game engine and AI agent implementations
+- A Tkinter interface for watching AI matches and playing against the agents
+- Local games with any combination of human and AI players
+- Automated tournaments and performance comparisons
+- CSV reports, Matplotlib charts, and statistical analysis
+- Unit and integration tests
 
-The project provides:
-
-- A modular UNO-style game engine
-- Configurable AI-controlled players
-- A Tkinter graphical interface for live demonstrations
-- Automated tournament experiments
-- CSV performance reports
-- Matplotlib comparison charts
-- Statistical analysis and integration tests
-
-Game data is generated through simulations; no external
-training dataset is required.
+The experiments generate their own game data. No external training dataset or model training is required.
 
 ## Research Objectives
 
-The project evaluates:
+The main research questions are:
 
-1. How different AI decision strategies affect win rate.
-2. How strategies affect average remaining hand points.
-3. How much computation time each strategy requires.
-4. Whether increasing Monte Carlo simulation budget
-   improves performance.
-5. Whether the V2 rollout model changes Monte Carlo
-   performance relative to the original version.
+1. How do different AI strategies compare in win rate?
+2. How do they compare in average remaining hand points?
+3. How much time does each strategy take to choose a move?
+4. Does increasing the Monte Carlo simulation budget improve performance?
+5. How does Monte Carlo V2 compare with the original Monte Carlo agent?
+
+Human-player games are an extra feature and are not included in the automated AI comparisons.
 
 ## Technologies
 
 - Python 3.10 or newer
-- Python standard library
-- Tkinter for the graphical interface
-- Matplotlib for experiment charts
-- unittest for automated testing
+- Tkinter for the desktop interface
+- Matplotlib for charts
+- Python `unittest` for testing
 
-No machine-learning training framework is required.
-The AI agents use rule-based decisions and simulation,
-not models trained on labeled data.
+The AI strategies use rules and simulations rather than a trained machine-learning model.
 
 ## Getting Started
 
@@ -88,159 +71,130 @@ python -m venv .venv
 ### 3. Install dependencies
 
 ```bash
-python -m pip install matplotlib
+python -m pip install -r requirements.txt
 ```
 
-Tkinter is included with many Python installations.
-Some Linux distributions require a separate Tkinter package.
-
-You can check Tkinter with:
+Tkinter is included with many Python installations, although some Linux distributions require it to be installed separately. You can check whether it is available with:
 
 ```bash
 python -m tkinter
 ```
 
-### 4. Run the GUI
+### 4. Run the game
 
-From the repository root:
+From the project root:
 
 ```bash
 python -m interface.uno_gui
 ```
 
-The graphical interface allows the user to:
+In the GUI, you can start a new game, choose the players, enable the optional Wild Draw Four ruleset, advance turns manually, or use Auto Play for AI turns. The interface also displays the action history and AI decision statistics.
 
-- Assign AI strategies to four player positions
-- Select Monte Carlo V1 or V2
-- Apply a V1-versus-V2 demonstration preset
-- Enable or disable Wild Draw Four
-- Start new games
-- Advance one turn at a time
-- Automatically play and pause games
-- Display decision statistics
-- Optionally reveal hands to the audience
+For AI-only demonstrations, you can select a Monte Carlo V1 versus V2 preset and optionally reveal all hands. Revealing hands changes only the display; AI agents still receive restricted observations.
 
-The audience hand-reveal option affects the display.
-AI agents continue receiving restricted observations.
+## Human Player Mode
+
+Each of the four player positions can be assigned to a human or an AI strategy. This allows one human to play against three AI agents, a mix of human and AI players, or four people to play on the same computer.
+
+Human players select cards by clicking them in the interface. Only legal cards are enabled. Playing a Wild card opens a color-selection window, and the Draw Card button becomes available when there is no legal move.
+
+For local multiplayer, each human player's hand stays hidden until they click **Reveal My Hand** at the start of their turn. The computer can then be passed to the next person without immediately showing their cards. **Reveal All Hands (Demo)** is disabled when a game includes human players.
+
+This is shared-computer multiplayer, not online multiplayer across separate devices.
 
 ## Game Rules
 
-The default game uses a simplified 104-card UNO-style deck.
+The default game uses a simplified 104-card UNO-style deck with number cards, Skip, Reverse, Draw Two, and Wild cards. An optional 108-card ruleset adds four Wild Draw Four cards.
 
-It includes number cards, Skip, Reverse, Draw Two, and Wild.
-Wild Draw Four is excluded from the default mode.
+The game follows these rules:
 
-An optional 108-card mode adds four Wild Draw Four cards.
-
-Key simplifications include:
-
-- Four AI-controlled players
-- Seven starting cards per player
-- Normal color, number, and action matching
-- A single draw and pass when no legal card is available
-- No stacking
-- No jump-ins
-- No manual UNO calls or calling penalties
-- Automatic "UNO!" notification at one remaining card
+- Four players, controlled by humans or AI agents
+- Seven starting cards for each player
+- Matching by color, number, or action type
+- Skip, Reverse, Draw Two, and Wild card effects
+- Draw one card and pass if no legal card is available
+- Automatic "UNO!" notification when a player has one card left
 - Immediate victory when a player plays their final card
 
-Wild Draw Four in extended mode is playable only when
-the player holds no other card matching the active color.
-There is no Wild Draw Four challenge system.
+Stacking, jump-ins, manual UNO calling penalties, and Wild Draw Four challenges are not implemented.
 
-These are project-specific game rules, not a claim to
-implement every official UNO rule.
+In the extended ruleset, a Wild Draw Four can be played only when the player has no card matching the active color. The following player draws four cards and loses a turn.
+
+These are the rules used by this project, not a full implementation of every official UNO rule.
 
 ## AI Strategies
 
 | Agent | Decision approach |
 |---|---|
-| Random | Random legal action |
-| Greedy | Prioritizes discarding high-value cards |
-| Heuristic | Scores cards using hand composition, action benefits and endgame factors |
-| Monte Carlo V1 | Evaluates actions using randomized approximate future play |
+| Random | Chooses randomly from legal moves |
+| Greedy | Prioritizes discarding higher-value cards |
+| Heuristic / Rule-Based | Scores moves using hand composition, action cards, and endgame considerations |
+| Monte Carlo V1 | Estimates move quality through approximate future simulations |
 | Monte Carlo V2 | Extends V1 by sampling hypothetical legal opponent moves |
 
-Monte Carlo V2 is a supplementary research comparison.
-The original four-agent study remains the primary scope.
+The primary experiment compares Random, Greedy, Heuristic, and Monte Carlo V1. Monte Carlo V2 is a supplementary comparison.
 
-Neither Monte Carlo implementation is a full
-hidden-information, four-player game simulator.
+Neither Monte Carlo version performs complete four-player hidden-information game simulations. The agents do not receive opponents' actual cards, even when the GUI is set to reveal hands for a demonstration.
 
 ## Running Experiments
 
-Run the original four-agent tournament:
+Run these commands from the project root.
+
+**Four-agent tournament:**
 
 ```bash
 python -m experiments.compare_four_agents
 ```
 
-Generate the four-agent reports:
+**Four-agent reports:**
 
 ```bash
 python -m experiments.generate_four_agent_reports
 ```
 
-Run baseline and extended-ruleset validation:
+**Baseline and extended-ruleset validation:**
 
 ```bash
 python -m experiments.run_validation
 ```
 
-Compare Monte Carlo simulation budgets:
+**Monte Carlo simulation budget comparison and charts:**
 
 ```bash
 python -m experiments.monte_carlo_budget
-```
-
-Generate Monte Carlo budget charts:
-
-```bash
 python -m experiments.plot_monte_carlo_budget
 ```
 
-Compare Monte Carlo V1 with V2:
+**Monte Carlo V1 versus V2 comparison and charts:**
 
 ```bash
 python -m experiments.compare_monte_carlo_versions
-```
-
-Generate V1/V2 comparison charts:
-
-```bash
 python -m experiments.plot_monte_carlo_versions
 ```
 
-Consolidate the experimental findings:
+**Consolidated research analysis:**
 
 ```bash
 python -m experiments.final_analysis
 ```
 
-Run the final system integration check:
+**System integration check:**
 
 ```bash
 python -m experiments.system_check
 ```
 
-Tournament output files and figures are generated
-under the `reports/` directory.
+Experiment results and figures are written to the `reports/` directory. The reporting scripts can regenerate these files.
 
 ## Evaluation Metrics
 
-The main performance measures are:
+The experiments compare agents using:
 
-- **Win rate:** Wins divided by agent appearances
-- **Average remaining hand points:** Mean hand score
-  remaining at the end of each game
-- **Average decision time:** Mean time spent selecting
-  an action, measured in milliseconds
+- **Win rate:** Wins divided by the number of games in which an agent participates
+- **Average remaining hand points:** Average card-point total left in a player's hand at the end of a game
+- **Average decision time:** Average time an AI agent takes to choose a move, in milliseconds
 
-Win-rate reports include Wilson 95% confidence intervals
-for individual observed rates.
-
-These intervals do not, by themselves, demonstrate a
-statistically significant difference between agents.
+Win-rate reports also include Wilson 95% confidence intervals. These intervals describe uncertainty in individual observed win rates; they do not by themselves prove that one agent significantly outperforms another.
 
 ## Testing
 
@@ -250,47 +204,34 @@ Run the complete automated test suite:
 python -m unittest discover -s tests -p "test_*.py" -v
 ```
 
-The project includes tests for:
+The tests cover game rules, cards and decks, AI decisions, Wild Draw Four behavior, experimental calculations, report generation, GUI configuration, asynchronous AI turns, and human-player controller behavior.
 
-- Cards, decks, and game rules
-- AI agents and legal decisions
-- Four-player game execution
-- Optional Wild Draw Four behavior
-- Experiment aggregation and statistical analysis
-- CSV reports and comparison charts
-- GUI configuration and asynchronous turns
-- System integration
-
-The 255 tests confirmed through Step 34 passed before
-this documentation update.
+Human gameplay should also be checked manually in the Tkinter interface, especially card selection, Wild color selection, turn handoffs, and games with multiple human players.
 
 ## Project Organization
 
 ```text
-agents/       AI decision-making strategies
-uno_game/     Cards, deck, rules, players and game engine
-interface/    Controller, Tkinter GUI and demonstration logic
-experiments/  Tournaments, statistics, reports and charts
-tests/        Automated test suite
-reports/      Generated experiment outputs (locally ignored)
+agents/       AI strategies and human-player representation
+uno_game/     Cards, deck, players, game rules, and game engine
+interface/    Controller, Tkinter GUI, and demonstration logic
+experiments/  Tournaments, statistics, reporting, and charts
+tests/        Automated tests
+reports/      Generated experimental results and figures
 docs/         Architecture and experiment documentation
 ```
 
-## Experimental Limitations
+## Limitations
 
-- The game uses simplified UNO rules.
-- The Monte Carlo rollout models are approximate.
-- Opponents' hidden cards are not provided to agents.
-- Monte Carlo V2 uses sampled, not actual, opponent hands.
-- Simulation trajectories may diverge despite shared seeds.
-- Pilot tournaments contain relatively few games.
-- Decision times depend on hardware and system load.
-- Performance differences should not be described
-  as statistically conclusive without further testing.
+- The game uses a simplified version of UNO rules.
+- Both Monte Carlo agents use approximate simulations.
+- Monte Carlo V2 samples hypothetical opponent cards rather than actual hidden hands.
+- Tournament sample sizes are relatively small, so performance differences should be interpreted cautiously.
+- Measured decision times can vary by computer and system load.
+- Human multiplayer currently runs locally on one shared computer; it does not support separate devices or online rooms.
 
 ## Additional Documentation
 
-- [Architecture and Rules](docs/ARCHITECTURE.md)
+- [Architecture and Game Rules](docs/ARCHITECTURE.md)
 - [Experimental Methodology](docs/EXPERIMENTS.md)
 
 ## Repository
